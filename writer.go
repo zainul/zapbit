@@ -2,10 +2,14 @@ package zapbit
 
 import (
 	"fmt"
+
 	"github.com/pkg/errors"
 	"github.com/streadway/amqp"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
+// NewWriter is get initial setup of rabbit mq
 func NewWriter(conf RabbitMQConfig, queue string) (*Writer, error) {
 
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", conf.User, conf.Password, conf.Address, conf.Port))
@@ -25,7 +29,7 @@ func NewWriter(conf RabbitMQConfig, queue string) (*Writer, error) {
 		false, // durable
 		false, // delete when unused
 		false, // exclusive
-		false, // no-wait
+		true,  // no-wait
 		nil,   // arguments
 	)
 
@@ -41,23 +45,50 @@ func NewWriter(conf RabbitMQConfig, queue string) (*Writer, error) {
 
 }
 
+// Write is interface of log write
 func (w *Writer) Write(data []byte) (int, error) {
 	if w.Channel == nil {
 		return 0, errors.New("got nil channel")
 	}
 
+	fmt.Print(string(data))
+
 	err := w.Channel.Publish(
 		ExchangeName, // exchange
-		w.Queue.Name, // routing key
+		"logging",    // routing key
 		false,        // mandatory
 		false,        // immediate
 		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        []byte(data),
+			ContentType:  "text/plain",
+			Body:         []byte(data),
+			DeliveryMode: amqp.Persistent,
 		})
+
+	if err != nil {
+		return -1, err
+	}
+
 	return 0, err
 }
 
+// GetCore is get zapcore of log engine
+func (w *Writer) GetCore() zapcore.Core {
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
+	topicLog := zapcore.AddSync(w)
+	jsonEnc := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+
+	return zapcore.NewTee(
+		zapcore.NewCore(jsonEnc, topicLog, highPriority),
+		zapcore.NewCore(jsonEnc, topicLog, lowPriority),
+	)
+}
+
+// Close is use for closing the channel mq
 func (w *Writer) Close() error {
 	if w.Channel == nil {
 		return errors.New("got nil channel")

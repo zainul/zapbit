@@ -15,4 +15,5 @@ type Writer struct {
 	Queue   amqp.Queue
 }
 
+// ExchangeName is exchange name rabbit mq
 const ExchangeName = "zapbit_logs"

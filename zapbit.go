@@ -16,4 +16,8 @@ type Writer struct {
 }
 
 // ExchangeName is exchange name rabbit mq
-const ExchangeName = "zapbit_logs"
+const (
+	KafkaMessanger  = 1
+	RabbitMessanger = 2
+	ExchangeName    = "zapbit_logs"
+)

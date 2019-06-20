@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"time"
+	"os"
 
 	"github.com/zainul/zapbit"
 	"go.uber.org/zap"
@@ -27,8 +27,17 @@ func main() {
 	defer writer.Close()
 
 	for {
-		logger.Info("Hello From zap")
-		time.Sleep(10 * time.Millisecond)
+		hostName, _ := os.Hostname()
+
+		logger.Info(
+			"logging",
+			zap.String("request_id", "somerequestid"),
+			zap.String("hostname", hostName),
+			zap.String("service", "someservicename"),
+			zap.ByteString("request_body", []byte("12 12 121")),
+			zap.ByteString("response_body", []byte("asd")),
+		)
+		// time.Sleep(10 * time.Millisecond)
 	}
 
 }

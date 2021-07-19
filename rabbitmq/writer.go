@@ -1,4 +1,4 @@
-package zapbit
+package rabbitmq
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 // NewWriter is get initial setup of rabbit mq
-func NewWriter(conf RabbitMQConfig, queue string) (*Writer, error) {
+func NewWriter(conf Config, queue string) (*Writer, error) {
 
 	conn, err := amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", conf.User, conf.Password, conf.Address, conf.Port))
 
@@ -50,8 +50,6 @@ func (w *Writer) Write(data []byte) (int, error) {
 	if w.Channel == nil {
 		return 0, errors.New("got nil channel")
 	}
-
-	fmt.Print(string(data))
 
 	err := w.Channel.Publish(
 		ExchangeName, // exchange

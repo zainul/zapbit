@@ -1,14 +1,15 @@
-package zapbit
+package rabbitmq
 
 import (
-	"github.com/streadway/amqp"
 	"reflect"
 	"testing"
+
+	"github.com/streadway/amqp"
 )
 
 func TestNewWriter(t *testing.T) {
 	type args struct {
-		conf  RabbitMQConfig
+		conf  Config
 		queue string
 	}
 	tests := []struct {
@@ -24,7 +25,7 @@ func TestNewWriter(t *testing.T) {
 			wantErr bool
 		}{name: "Test Failed initial", args: args{
 			queue: "some queue",
-			conf: RabbitMQConfig{
+			conf: Config{
 				Port:     5672,
 				Address:  "localhost",
 				Password: "some_password",
